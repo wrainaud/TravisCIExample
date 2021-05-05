@@ -1,38 +1,26 @@
-trigger:
-- main
+stages:
+  - build
+  - deploy
+  - loadtest-local
 
-pool:
-  vmImage: 'ubuntu-latest' 
+image:
+  name: ubuntu:latest
 
-steps:
-# Running with our extension! This will fail by threshold
-- task: k6-load-test@0
-  inputs:
-    cloud: true
-    filename: 'api.js'
-    args: '-e NUMBER=1'
-  displayName: run via extension
+build:
+  stage: build
+  script:
+    - echo "building my application in ubuntu container..."
 
-# Or run it manually! This test will not pass
-- script: |
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 379CE192D401AB61
-    echo "deb https://dl.bintray.com/loadimpact/deb stable main" | sudo tee -a /etc/apt/sources.list
-    sudo apt-get update
-    sudo apt-get install k6
-  displayName: Install k6 tool
-  condition: always()
+deploy:
+  stage: deploy
+  script:
+    - echo "deploying my application in ubuntu container..."
 
-- script: |
-    k6 version
-  displayName: Check if k6 is installed
-  condition: always()
-
-- script:
-    k6 login cloud --token $(k6_cloud_token)
-  displayName: Authenticate
-  condition: always()
-
-- script:
-    k6 cloud api.js -e NUMBER=1000
-  displayName: run cloud test
-  condition: always()
+loadtest-local:
+  image:
+    name: loadimpact/k6:latest
+    entrypoint: ['']
+  stage: loadtest-local
+  script:
+    - echo "executing local k6 in k6 container..."
+    - k6 run ./loadtests/performance-test.js
